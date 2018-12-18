@@ -1,11 +1,9 @@
-
-setwd("~/Google Drive/Migration Speed/Ideas paper/Code/parasit-mig-patterns")
-source("functions.R") # Select "upstream differencing" file _UD
-source("base_params_per_day.R") # Select "upstream differencing" file _UD
-
 library(animation)
 library(fBasics) # for Heaviside function
 library(doParallel)
+
+source("functions.R") # Select "upstream differencing" file _UD
+source("base_params_per_day.R") # Select "upstream differencing" file _UD
 
 ###############################################################################################
 # Migratory escape as a function of lambda/c
@@ -84,6 +82,7 @@ out.escape<-foreach(i=1:(dim(rat)[1])) %dopar%{
 ptime/60
 
 # 166 mins mins on 10 cores (for c to 100)
+
 ###############################################################################################
 # Extract the louse abundance at the modal distance migrated
 ###############################################################################################
@@ -126,65 +125,3 @@ cec<-list(
 )
 
 
-eg<-c(
-	spread=which(rat[,1]==11&rat[,2]==0.0036), 
-	spread.here=which(rat[,1]==31&rat[,2]==0.0020), 
-	escape.here=which(rat[,1]==45&rat[,2]==0.0008), 
-	escape.always=which(rat[,1]==57&rat[,2]==0.0000))
-
-###################################################
-# Figure
-###################################################
-col.pal<-c(red="#ED2124", 'dodgerblue1', 'dodgerblue4', col.pal['green'])
-col.pal<-c(red="#ED2124", grey(0.6), grey(0.4), 1)
-col.pal2<-c("#F3C0BF", grey(0.9), grey(0.7), grey(0.5))
-
-# quartz(width=3.4252, height=5, pointsize=10)
-pdf(file="Escape_20181209.pdf", width=3.4252, height=5, pointsize=10)
-par(mfrow=c(2,1), mar=c(4,4,2,1), mgp=c(2.5, 1, 0))
-
-par(mar=c(4,4,2,1))
-
-	
-plot(time[eg[1],], m.avg.all[eg[1],]/5, "l", ylim=range(m.avg.all[eg,]/5), xlab="Time in transient phase (days)", bty="l", ylab="", col=col.pal[1], lwd=1.5, yaxt="n")
-axis(side=2, at=c(1:3))
-points(seq(15, 60, 15), m.avg.all[eg[1],seq(1, 500, length.out=5)[2:5]]/5, pch=1, col=col.pal[1])
-mtext(side=2, "Change in parasite burden", line=2.5)
-abline(h=1, lty=2)
-
-for(j in 2:length(eg)){
-	lines(time[eg[j],], m.avg.all[eg[j],]/5, col=col.pal[j], lwd=1.5)
-	points(seq(15, 60, 15), m.avg.all[eg[j], seq(1, 500, length.out=5)[2:5]]/5, pch=j, col=col.pal[j])
-	}
-mtext(side=3, adj=0, line=0.5, "a)")
-
-image(matrix(esc.cat, nrow=length(c.all), ncol=length(lambda.all), byrow=TRUE), x=c.all, y=lambda.all, xlab=expression(paste("Migration speed (", italic(c), ", km ", d^-1,")")), ylab=expression(paste("Transmission rate (",lambda, ", ", d^-1, ")")), col=col.pal2, yaxt="n", bty="l")
-axis(side=2, at=c(0, 0.002, 0.004))
-lines(cec[[1]][,'x'], cec[[1]][,'y'])
-
-points(rat[eg,1], rat[eg,2], pch=1:4, col=col.pal, lwd=1.5)
-abline(v=base.params['c.'], lty=3)
-abline(h=base.params['lambda'], lty=3)
-
-text(12, 0.0023, "Spread", col=col.pal[1])
-text(50, 0.002, "Escape", col=col.pal[4])
-mtext(side=3, adj=0, line=0.5, "b)")
-dev.off()
-# #--------------------------------------------------------
-# # What is happening in certain scenarios
-
-
-# plot(rat[,1], rat[,2], "n", las=1, bty="l", xlab="Migration speed (km/day)", ylab=expression(paste("Transmission rate (", lambda, ")")), yaxt="n")
-# text(rat[,1], rat[,2], esc.cat, cex=0.8, col=c(col.pal['red'], "#1E90FF", '#104E8B', col.pal['green'])[esc.cat])
-# # text(rat[,1], rat[,2], 1:dim(rat)[1], pos=3, cex=0.5, col=2)
-
-# test<-c(480, 501, 522, 543, 564, 585, 606, 627)
-
-
-# plot(V[[eg[1]]]$t/as.numeric(rat[eg[1],1]), m.avg.all[eg[1],], "n", ylim=range(m.avg.all[test,]), xlab="Time in transient phase (days)", bty="l", ylab="", col=col.pal['red'], lwd=1.5)
-# abline(h=5, lty=3)
-
-# for(i in 1:length(test)){
-	# lines(V[[test[i]]]$t/rat[test[i],1], m.avg.all[test[i],], col=i, lty=esc.cat[test[i]])
-	# points(V[[test[i]]]$t[c(400,500)]/rat[test[i],1], m.avg.all[test[i],c(400,500)], col=i, pch=19, cex=0.5)
-	# }

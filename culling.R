@@ -1,12 +1,11 @@
 #-------------------------------------------------------------------------------
-
-setwd("~/Google Drive/Migration Speed/Ideas paper/Code/parasit-mig-patterns")
-source("functions.R") # Select "upstream differencing" file _UD
-source("base_params_per_day.R") # Select "upstream differencing" file _UD
-
 library(animation)
 library(fBasics) # for Heaviside function
 library(doParallel)
+
+
+source("functions.R") # Select "upstream differencing" file _UD
+source("base_params_per_day.R") # Select "upstream differencing" file _UD
 
 init.cull<-matrix(c(
 	c(10^4/sqrt(2*pi*(sd.start^2))*exp(-(x-mean.start)^2/(2*sd.start^2))+1), # N_hat

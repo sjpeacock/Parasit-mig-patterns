@@ -1,14 +1,10 @@
 #-------------------------------------------------------------------------------
-
-setwd("~/Google Drive/Migration Speed/Ideas paper/Code/parasit-mig-patterns")
-source("functions.R") 
-source("base_params_per_day.R") 
-
-
 library(animation)
 library(fBasics) # for Heaviside function
 library(doParallel)
 
+source("functions.R") 
+source("base_params_per_day.R") 
 ###############################################################################################
 # Migratory stalling
 ###############################################################################################
