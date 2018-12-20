@@ -1,36 +1,48 @@
 #-------------------------------------------------------------------------------
 library(here)
+library(fBasics) # for Heaviside function
+library(doParallel)
+
 
 source("functions.R") # Select "upstream differencing" file _UD
 source(here("base_params_per_day.R")) # Select "upstream differencing" file _UD
 
+# Set number of cores you can use for parallelization of simulations over
+# parameter space.
+nCores <- 10
+if(nCores > detectCores()) stop("Number of cores set to more than available!")
 
-###############################################################################################
+###############################################################################
 # Migratory escape as a function of lambda/c
-###############################################################################################
+###############################################################################
 
+#------------------------------------------------------------------------------
+# Changing uptake rate lambda and migration speed c 
+# for different levels of sigma
 
-#------------------------------------------------
-# Changing uptake rate lambda and migration speed c for different levels of sigma
+sigma.all <- c(0, 0.005, 0.01, 0.02)
+c.all <- seq(1, 100, 2)
+lambda.all <- seq(0, 0.008, 0.0002) 
 
-# sigma.all<-c(0, 0.005, 0.01, 0.02)
-sigma.all<-c(0:10)*0.005
-c.all<-seq(1, 100, 2)
-lambda.all<-seq(0, 0.004, 0.0002) 
-rat<-cbind(rep(c.all, each=length(lambda.all)), rep(lambda.all, length(c.all)))
+# Matrix of all parameter combinations to be tried:
+rat <- cbind(rep(c.all, each = length(lambda.all)), rep(lambda.all, length(c.all)))
 
+# Create matrix to store timeseries of average parasite burden for each
+# value of sigma and each combination of c and lambda in rat
+m.avg.all <- list(); length(m.avg.all) <- length(sigma.all)
+for(i in 1:length(sigma.all)) m.avg.all[[i]] <- matrix(NA, nrow=dim(rat)[1], ncol=500)
 
-m.avg.all<-list(); length(m.avg.all)<-length(sigma.all)
-for(i in 1:length(sigma.all)) m.avg.all[[i]]<-matrix(NA, nrow=dim(rat)[1], ncol=500)
+# Set up vector to store process times for each value of sigma
+ptime <- numeric(length(sigma.all))
 
-
+# Loop over each value of sigma, and (in parallel) each combination of 
 for(s in 1:length(sigma.all)){
+	
+	# Set value of sigma to be used in "base parameters"
 	base.params['sigma']<-sigma.all[s]
-	V<-list(); length(V)<-dim(rat)[1]
 	
-	registerDoParallel(cores=4)
-	
-	ptime <- system.time({ #10 mins for i=1:210; 2 mins for i=1:66
+	registerDoParallel(cores=nCores)
+	ptime[s] <- system.time({ #10 mins for i=1:210; 2 mins for i=1:66
 		
 	V<-foreach(i=1:(dim(rat)[1])) %dopar%{
 		params.i<-base.params
@@ -122,11 +134,11 @@ for(s in 2:length(sigma.all)){
 	
 	out[[s]]<-nls(y~a*(x)/(b+(x)), data=data.frame(x=z[[s]][[1]]$x, y=z[[s]][[1]]$y), start=list(a=1, b=1)) 
 		
-	lines(seq(1, 60, 0.2), summary(out[[s]])$coefficients[1,1]*seq(1, 60, 0.2)/(summary(out[[s]])$coefficients[2,1]+seq(1, 60, 0.2)), col=2)
+	lines(seq(1, 100, 0.2), summary(out[[s]])$coefficients[1,1]*seq(1, 100, 0.2)/(summary(out[[s]])$coefficients[2,1]+seq(1, 100, 0.2)), col=2)
 	
-	lines.esc[[s]]<-cbind(x=seq(1, 60, 0.2), y=summary(out[[s]])$coefficients[1,1]*seq(1, 60, 0.2)/(summary(out[[s]])$coefficients[2,1]+seq(1, 60, 0.2)))
+	lines.esc[[s]]<-cbind(x=seq(1, 100, 0.2), y=summary(out[[s]])$coefficients[1,1]*seq(1, 100, 0.2)/(summary(out[[s]])$coefficients[2,1]+seq(1, 100, 0.2)))
 }
-lines.esc[[1]]<-cbind(x=c(1,60), y=c(0,0))
+lines.esc[[1]]<-cbind(x=c(1,100), y=c(0,0))
 
 ###########################
 # Figure for paper
@@ -135,7 +147,7 @@ quartz(width=3.4252, height=2.7, pointsize=10)
 par(mfrow=c(1,1), mar=c(4,4,2,3), mgp=c(2.5, 1, 0))
 
 plot(rat[,1], rat[,2], "n", bty="l", xlab="Migration speed (km/day)", ylab=expression(paste("Transmission rate (", lambda, ")")), yaxt="n")
-s<-6;text(rat[,1], rat[,2], esc.cat[,s], cex=0.7); mtext(side=3, paste(sigma.all[s]))
+# s<-6;text(rat[,1], rat[,2], esc.cat[,s], cex=0.7); mtext(side=3, paste(sigma.all[s]))
 axis(side=2, at=c(0, 0.002, 0.004))
 for(s in 1:length(sigma.all)) lines(lines.esc[[s]][,'x'], lines.esc[[s]][,'y'], lwd=c(0.8, 0.8, 1.5, 0.8)[s])
 text(55, 0.0002, expression(paste(sigma==0)))
